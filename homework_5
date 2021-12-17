@@ -1,0 +1,154 @@
+# Processes
+# 1. Run a sleep command three times at different intervals
+sleep 100000 &
+# [1] 1355
+sleep 500000 &
+# [2] 1356
+sleep 900000 &
+# [3] 1357
+
+
+
+# 2. Send a SIGSTOP signal to all of them in three different ways.
+# по одному можно было бы вызвать процесс из фона на передний план командой fg и остановить через Ctrl+z, или отослать процессу сигнал SIGSTOP (19) c помощью команды kill -n 19 pid_процесса, но по задаче нужно остановить сразу все три процееса. Попробую:
+# 1) pgrep sleep - выведет список процессов sleep, которые я запустил
+kill -n 19 $(pgrep sleep) # остановил процессы sleep
+kill -n 18 $(pgrep sleep) # запущу процессы обратно
+# или можно было бы сделать то же самое через их PID командой kill -SIGSTOP 1367 1368 1369
+# 2) pkill так же работает с именами процессов и может остановить все с именем sleep, pkill принимает сигналы числом или словом
+pkill -SIGSTOP sleep # или pkill -19 sleep
+pkill -SIGCONT sleep # запущу все процессы обратно
+# 3) можно просто остановить все разом командой kill, зная PID процессов
+ps -af # выведет подробную информацию о процессах текущего пользователя
+# [user@localhost ~]$ ps -a
+#   PID TTY          TIME CMD
+#  1367 pts/0    00:00:00 sleep
+#  1368 pts/0    00:00:00 sleep
+#  1369 pts/0    00:00:00 sleep
+#  1419 pts/0    00:00:00 ps
+kill -n 19 136{7,8,9}
+# 4) не уверен, что способ 3 сильно отличается от первого, поэтому попробую еще один
+kill -n 19 %{1,2,3} # останавливаю процессы, отображаемые в jobs, так меньше шансов ошибиться в них
+
+
+
+# 3. Check their statuses with a job command
+jobs
+# [1]   Stopped                 sleep 100000
+# [2]-  Stopped                 sleep 500000
+# [3]+  Stopped                 sleep 900000
+
+
+
+# 4. Terminate one of them. (Any)
+kill %1
+# [1]   Terminated              sleep 100000
+
+
+
+# 5. To other send a SIGCONT in two different ways.
+# 1)
+kill -n 18 %2
+# 2)
+kill -SIGCONT 1369
+# можно было бы воспользоваться командой pkill - она бы запустила все процессы sleep, что по сути в моей ситуации являлось запуском только одной из двух оставшихся, но это как-то неправильно. Получается, pkill в некотором плане менее гибкая, так как будет работать со всеми процессами с одинаковым названием
+
+
+
+# 6. Kill one by PID and the second one by job ID
+kill 1368
+# [2]-  Terminated              sleep 500000
+# [3]+  Running                 sleep 900000 &
+kill %3
+# [3]+  Terminated              sleep 900000
+
+
+
+# systemd
+# 1. Write two daemons: one should be a simple daemon and do sleep 10 after a start and
+# then do echo 1 > /tmp/homework, the second one should be oneshot and do echo 2 >
+# /tmp/homework without any sleep
+
+# Демона нужно создавать в директории /etc/systemd/systemd
+# Про создание юнита демона можно почитать man SYSTEMD.UNIT
+# В лекции было упомянуто отдельно узнать про type, про него можно почитать man SYSTEMD.SERVICE
+# Напишу пару скриптов согласно заданию, расположу их в директории своего пользователя /home/anme/
+# script1.sh:
+  # #!/bin/bash
+  # sleep 10
+  # echo 1>/tmp/homework
+# script2.sh:
+  # #!/bin/bash
+  # 2>/tmp/homework
+# в директории /etc/systemd/system создам файл daemonone.service
+# daemonone.service:
+  # [Unit]
+  # Description=My Daemon One with sleep command
+  # [Service]
+  # Type=simple
+  # ExecStart=/home/anme/script1.sh
+  # [Install]
+  # WantedBy=multi-user.target
+# уже можно проверить статус моего демона
+systemctl status daemonone.service
+# ● daemonone.service - My Daemon One with sleep command
+#    Loaded: loaded (/etc/systemd/system/daemononed.service; disabled; vendor preset: disabled)
+#    Active: inactive (dead)
+
+# 2. Make the second depended on the first one (should start only after the first)
+# в директории /etc/systemd/system создам файл daemontwo.service
+# daemontwo.service:
+  # [Unit]
+  # Description=My Daemon Two without sleep command
+  # After=daemonone.service
+  # [Service]
+  # ExecStart=/home/anme/script2.sh
+  # [Install]
+  # WantedBy=multi-user.target
+
+# 3. Write a timer for the second one and configure it to run on 01.01.2019 at 00:00
+# Судя по всему имеется ввиду еще один юнит .timer. Напишем такой
+# daemontwo.timer:
+  # [Unit]
+  # Description=Timer for Daemon Two
+  # [Timer]
+  # Unit=daemontwo.service
+  # OnCalendar=2019-01-01 00:00
+  # [Install]
+  # WantedBy=timers.target
+
+# 4. Start all daemons and timer, check their statuses, timer list and /tmp/homework
+sudo systemctl enable daemonone.service
+sudo systemctl enable daemontwo.service
+sudo systemctl enable daemontwo.timer
+sudo chmod 777 /home/anme/* # не сразу заметил, что у демона не будет разрешения на исполнение. Для надежности сразу же выдал полные права на оба скрипта в дирекории
+sudo systemctl start daemonone.service
+sudo systemctl start daemontwo.service
+sudo systemctl start daemontwo.timer
+sudo systemctl status daemonone.service
+# ● daemonone.service - My Daemon One with sleep command
+#    Loaded: loaded (/etc/systemd/system/daemonone.service; enabled; vendor preset: disabled)
+#    Active: inactive (dead) since Fri 2021-12-17 14:49:58 EST; 2min 20s ago
+#   Process: 3400 ExecStart=/home/anme/script1.sh (code=exited, status=0/SUCCESS)
+#  Main PID: 3400 (code=exited, status=0/SUCCESS)
+#
+# Dec 17 14:49:48 localhost.localdomain systemd[1]: Started My Daemon One with sleep command.
+sudo systemctl status daemontwo.service
+# ● daemontwo.service - My Daemon Two without sleep command
+#   Loaded: loaded (/etc/systemd/system/daemontwo.service; enabled; vendor preset: disabled)
+#   Active: inactive (dead) since Fri 2021-12-17 14:51:48 EST; 17s ago
+#  Process: 3432 ExecStart=/home/anme/script2.sh (code=exited, status=0/SUCCESS)
+# Main PID: 3432 (code=exited, status=0/SUCCESS)
+#
+# Dec 17 14:51:48 localhost.localdomain systemd[1]: Started My Daemon Two without sleep command.
+sudo systemctl status daemontwo.timer
+# ● daemontwo.timer - Timer for Daemon Two
+#    Loaded: loaded (/etc/systemd/system/daemontwo.timer; enabled; vendor preset: disabled)
+#    Active: active (elapsed) since Fri 2021-12-17 15:03:03 EST; 3s ago
+#
+# Dec 17 15:03:03 localhost.localdomain systemd[1]: Started Timer for Daemon Two.
+
+# 5. Stop all daemons and timer
+sudo systemctl stop daemonone.service
+sudo systemctl stop daemontwo.service
+sudo systemctl stop daemontwo.timer
