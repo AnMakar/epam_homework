@@ -95,6 +95,8 @@ systemctl status daemonone.service
 #    Loaded: loaded (/etc/systemd/system/daemononed.service; disabled; vendor preset: disabled)
 #    Active: inactive (dead)
 
+
+
 # 2. Make the second depended on the first one (should start only after the first)
 # в директории /etc/systemd/system создам файл daemontwo.service
 # daemontwo.service:
@@ -106,6 +108,8 @@ systemctl status daemonone.service
   # [Install]
   # WantedBy=multi-user.target
 
+
+
 # 3. Write a timer for the second one and configure it to run on 01.01.2019 at 00:00
 # Судя по всему имеется ввиду еще один юнит .timer. Напишем такой
 # daemontwo.timer:
@@ -116,6 +120,8 @@ systemctl status daemonone.service
   # OnCalendar=2019-01-01 00:00
   # [Install]
   # WantedBy=timers.target
+
+
 
 # 4. Start all daemons and timer, check their statuses, timer list and /tmp/homework
 sudo systemctl enable daemonone.service
@@ -148,7 +154,109 @@ sudo systemctl status daemontwo.timer
 #
 # Dec 17 15:03:03 localhost.localdomain systemd[1]: Started Timer for Daemon Two.
 
+
+
 # 5. Stop all daemons and timer
 sudo systemctl stop daemonone.service
 sudo systemctl stop daemontwo.service
 sudo systemctl stop daemontwo.timer
+
+
+# cron/anacron
+# 1. Create an anacron job which executes a script with echo Hello > /opt/hello and runs
+# every 2 days
+# Добавлю новую строчку в /etc/anacrontab:
+# 2       0       hello   echo "Hello from anacron" > /opt/hello
+sudo anacron -T #  опция позволяет "Протестировать Anacrontab", судя по всему данная опция проверит /etc/anacrontab на ошибки
+# Можно посмотреть как там дела у крона в логах
+tail /var/log/cron
+
+
+
+# 2. Create a cron job which executes the same command (will be better to create a script for
+# this) and runs it in 1 minute after system boot.
+# Создам скрипт:
+  # #!/bin/bash
+  # echo "Hello from cron" > /opt/hellocron
+chmod a+x /home/anme/crontask.sh # Дам ему права на исполнение
+Crontab -l # отображение содержимого crontab файла для текущего пользователя
+Crontab -e # для редактирования
+# @reboot /home/anme/crontask.sh # @reboot запустит задание после перезагрузки
+
+
+
+# 3. Restart your virtual machine and check previous job proper execution
+sudo reboot
+# Странно, но данная задача не сработала для моего пользователя, файл в /opt не появился
+sudo crontab -e
+# no crontab for root - using an empty one
+# crontab: installing new crontab
+sudo crontab -l
+# @reboot /home/anme/crontask.sh
+sudo reboot
+ls /opt/
+# hello  hellocron
+cat /opt/hellocron
+# Hello from cron
+# а теперь файл появился. Судя по всему, данная операция может быть выполнена только под root
+
+# а в выводе ниже я проверял как работает anacron
+sudo tail /var/log/cron
+# Dec 18 09:59:15 localhost crontab[1404]: (anme) REPLACE (anme)
+# Dec 18 09:59:15 localhost crontab[1404]: (anme) END EDIT (anme)
+# Dec 18 09:59:18 localhost crontab[1407]: (anme) LIST (anme)
+# Dec 18 10:01:01 localhost CROND[1306]: (root) CMD (run-parts /etc/cron.hourly)
+# Dec 18 10:01:01 localhost run-parts(/etc/cron.hourly)[1306]: starting 0anacron
+# Dec 18 10:01:01 localhost anacron[1315]: Anacron started on 2021-12-18
+# Dec 18 10:01:01 localhost run-parts(/etc/cron.hourly)[1317]: finished 0anacron
+# Dec 18 10:01:01 localhost anacron[1315]: Will run job `hello' in 42 min.
+# Dec 18 10:01:01 localhost anacron[1315]: Will run job `cron.daily' in 47 min.
+# Dec 18 10:01:01 localhost anacron[1315]: Jobs will be executed sequentially
+# Через некоторое время задача сработала
+sudo tail /var/log/cron
+# Dec 18 10:33:26 localhost crontab[1607]: (anme) LIST (anme)
+# Dec 18 10:43:01 localhost anacron[1315]: Job `hello' started
+# Dec 18 10:43:01 localhost anacron[1315]: Job `hello' terminated
+# Dec 18 10:48:01 localhost anacron[1315]: Job `cron.daily' started
+# Dec 18 10:48:02 localhost run-parts(/etc/cron.daily)[1682]: starting logrotate
+# Dec 18 10:48:02 localhost run-parts(/etc/cron.daily)[1690]: finished logrotate
+# Dec 18 10:48:02 localhost run-parts(/etc/cron.daily)[1682]: starting man-db.cron
+# Dec 18 10:48:03 localhost run-parts(/etc/cron.daily)[1749]: finished man-db.cron
+# Dec 18 10:48:03 localhost anacron[1315]: Job `cron.daily' terminated
+# Dec 18 10:48:03 localhost anacron[1315]: Normal exit (2 jobs run)
+sudo ls /opt/
+# hello
+cat /opt/hello
+# Hello from anacron
+
+
+
+# lsof
+sudo yum install lsof # по умолчанию у меня отсутствует lsof, установлю его
+# 1. Run a sleep command, redirect stdout and stderr into two different files (both of them will
+# be empty).
+sleep 555555 1>/home/anme/lsofout.txt 2>/home/anme/lsoferr.txt &
+
+
+
+# 2. Find with the lsof command which files this process uses, also find from which file it gain
+lsof -p 1376
+# COMMAND  PID USER   FD   TYPE DEVICE  SIZE/OFF     NODE NAME
+# sleep   1376 anme  cwd    DIR  253,0       192  8464237 /home/anme
+# sleep   1376 anme  rtd    DIR  253,0       237       64 /
+# sleep   1376 anme  txt    REG  253,0     33128 12745393 /usr/bin/sleep
+# sleep   1376 anme  mem    REG  253,0 106172832 12799787 /usr/lib/locale/locale-archive
+# sleep   1376 anme  mem    REG  253,0   2156272    15673 /usr/lib64/libc-2.17.so
+# sleep   1376 anme  mem    REG  253,0    163312    15666 /usr/lib64/ld-2.17.so
+# sleep   1376 anme    0u   CHR  136,0       0t0        3 /dev/pts/0
+# sleep   1376 anme    1w   REG  253,0         0  8416070 /home/anme/lsofout.txt
+# sleep   1376 anme    2w   REG  253,0         0  8416072 /home/anme/lsoferr.txt
+
+lsof -p 1376 | grep 0u
+# sleep   1376 anme    0u   CHR  136,0       0t0        3 /dev/pts/0 # судя по всему, данная строчка указывает на нулевой поток stdin
+
+
+
+# 3. List all ESTABLISHED TCP connections ONLY with lsof
+sudo lsof -i | grep ESTABLISHED
+sudo lsof -i -s TCP:ESTABLISHED # попробовал обойтись без grep
