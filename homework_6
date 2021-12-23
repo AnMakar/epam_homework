@@ -1,0 +1,96 @@
+# Task 1: 
+# As a result of each point, you should provide a corresponding command. 
+# localhost - your CentOS VM running in VirtualBox 
+# remotehost - 18.221.144.175 (public IP) 
+# webserver - 172.31.45.237 (private IP) 
+
+# 1.1. SSH to remotehost using username and password provided to you in Slack. Log out from remotehost. 
+# немного упрощу себе жизнь, внеся адреса в /etc/hosts
+nano /etc/hosts
+# 18.221.144.175 remotehost
+# 172.31.45.237 webserver
+
+ssh Anton_Makarov@remotehost
+# введу пароль
+logout # отключаюсь от remotehost
+
+# 1.2. Generate new SSH key-pair on your localhost with name "hw-5" (keys should be created in ~/.ssh folder).
+ssh-keygen -f /home/anme/.ssh/hw-5 -t rsa
+ls ./.ssh/
+ 
+# 1.3. Set up key-based authentication, so that you can SSH to remotehost without password. 
+# Нужно скопировать открытый ключ на удаленную машину
+ssh-copy-id -i ~/.ssh/hw-5.pub Anton_Makarov@18.221.144.175
+
+# 1.4. SSH to remotehost without password. Log out from remotehost. 
+ssh -i ./.ssh/hw-5 AntonMakarov@18.221.144.175
+logout
+
+# 1.5. Create SSH config file, so that you can SSH to remotehost simply running ssh remotehost command. As a result, provide output of command cat ~/.ssh/config. 
+nano ./.ssh/config
+# Host anmessh
+# Hostname 18.221.144.175
+# Port 22
+# User Anton_Makarov
+# IdentityFile ~/.ssh/hw-5
+ssh anmessh
+
+# 1.6. Using command line utility (curl or telnet) verify that there are some webserver running on port 80 of webserver. Notice that webserver has a private network IP, so you can access it only from the same network (when you are on remotehost that runs in the same private network). Log out from remotehost. 
+# telnet не установлен, для его установки вероятно понадобятся права администратора, попробую curl 
+curl 172.31.45.237:80
+# выдало следующее:
+# [Anton_Makarov@ip-172-31-33-155 ~]$ curl 172.31.45.237:80
+# <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"><html><head>
+# <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+                # <title>Apache HTTP Server Test Page powered by CentOS</title>
+                # <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+# и так далее...
+logout
+
+# 1.7. Using SSH setup port forwarding, so that you can reach webserver from your localhost (choose any free local port you like). 
+# выведу информацию об используемых портах, я смогу использовать в принципе любой порт, который сейчас не занят
+sudo lsof -i -P # смотрю в колонку NAME
+# возьму порт 12345
+sudo ssh -i ./.ssh/hw-5 Anton_Makarov@remotehost -N -L 12345:172.31.45.237:80 & # подключаюсь к remotehost с уз Anton_Makarov, использую авторизацию с помощью ключа, чтобы не вводить пароль, использую локальный порт 12345, подключаюсь к webserver через порт 80, опция -N не совсем для меня понятна, но, судя по всему, она меня не подключает к удаленной машине, а опция  -L производит портфорвардинг, & в конце отправляет всё это работать в фоне.
+# теперь у меня lsof показывает, что слушается порт 12345 
+
+# 1.8 Like in 1.6, but on localhost using command line utility verify that localhost and port you have specified act like webserver, returning same result as in 1.6. 
+curl localhost:12345 # проверяю доступность webserver на локальном адресе на порту 12345
+# [anme@localhost ~]$ curl localhost:12345
+# <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"><html><head>
+# <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+                # <title>Apache HTTP Server Test Page powered by CentOS</title>
+                # <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+# С настройкой всего вышеперечисленного пришлось помучиться, потому что не понимал как это работает. Кроме того заметил, что 12345:webserver:80 не работает, потому что, видимо, эта настройка выполняется уже на remotehost, а значит отсутствует в /etc/hosts. Заработало только тогда, когда вбил сам сервер.
+
+# 1.9 (*) Open webserver webpage in browser of your Host machine of VirtualBox (Windows, or Mac, or whatever else you use). You may need to setup port forwarding in settings of VirtualBox.
+# Тоже пришлось помучиться. В итоге нужно сделать следующее:
+# В Putty прописать Host Name 127.0.0.1 и Port 2222 - такая у меня настройка проброски портов в ВМ
+# В разделе SSH -> Tunels в Source port прописать 12345, в Destination - localhost:12345, и нажать Add
+# После этого подключаюсь, авторизовываюсь в ВМ, открываю браузер на самом компьютере и перехожу по адресу localhost:12345, и у меня открывается браузер с надписью
+# Hello!
+# You are here because you're probably a DevOps courses member. In that case you should open THIS LINK
+# Ну и открывается ссылка https://www.youtube.com/watch?v=dQw4w9WgXcQ. Отлично зарикролили!))
+ 
+# Task 2: 
+# # Following tasks should be executed on your localhost as you will need root privileges 
+# 2.1. Imagine your localhost has been relocated to Havana. Change the time zone on the localhost to Havana and verify the time zone has been changed properly (may be multiple commands).
+# Сначала узнаю точное название таймзоны
+timedatectl list-timezones | grep Havana
+timedatectl set-timezone America/Havana # устанавливаю таймзону
+# почему-то в tzselect Havana не нашел, поэтому timedatectl выглядит как-то надежнее
+
+# 2.2. Find all systemd journal messages on localhost, that were recorded in the last 50 minutes and originate from a system service started with user id 81 (single command). 
+# journalctl - журнал systemd
+journalctl -S '-50min' # выведет логи за последние 50 минут
+journalctl _UID=81 -S '-50min' # _UID= в man явно не описан, но в примерах команд были такие варианты с _PID=, это же сработало и с UID, об этом можно никогда и не догадаться
+
+# 2.3. Configure rsyslogd by adding a rule to the newly created configuration file /etc/rsyslog.d/auth-errors.conf to log all security and authentication messages with the priority alert and higher to the /var/log/auth-errors file. Test the newly added log directive with the logger command (multiple commands).
+nano /etc/rsyslog.d/auth-errors.conf
+# # My Own Logging
+# auth.alert,auth.emerg /var/log/auth-errors.log
+# security.alert,security.emerg /var/log/auth-errors.log
+systemctl restart rsyslog
+# протестирую работу лога с помощью logger
+logger -p security.emerg "security emerg test"
+tail /var/log/auth-errors.log
