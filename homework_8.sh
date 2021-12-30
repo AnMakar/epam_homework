@@ -77,7 +77,7 @@ sudo mkswap /dev/sdb2
 # Setting up swapspace version 1, size = 524284 KiB
 # no label, UUID=54f3d209-121f-4909-ade5-3a2919e8eac6
 
-1.5. Configure the newly created XFS file system to persistently mount at /backup
+# 1.5. Configure the newly created XFS file system to persistently mount at /backup
 sudo mkdir /backup
 sudo mount /dev/sdb1 /backup
 # для включения автомонтирования раздела нужнго прописать строчку в /etc/fstab
@@ -91,14 +91,14 @@ sudo nano /etc/fstab
 # 5) для дампов файловой системы. 0 - дампы не нужны
 # 6) для определения порядка, в котором проверки файловой системы выполняются во время перезагрузки
 
-1.6. Configure the newly created swap space to be enabled at boot
+# 1.6. Configure the newly created swap space to be enabled at boot
 sudo swapon /dev/sdb2 # включение файла подкачки
 
 # для включения файла подкачки после перезагрузки системы Linux нужно прописать в файле /etc/fstab строчку с UUID="607e9614-8863-4896-9f29-3a644611bddb", которую я получил из blkid выше
 sudo nano /etc/fstab
 # UUID="54f3d209-121f-4909-ade5-3a2919e8eac6" none swap sw 0 0
 
-1.7. Reboot your host and verify that /dev/sdc1 is mounted at /backup and that your swap partition  (/dev/sdc2) is enabled
+# 1.7. Reboot your host and verify that /dev/sdc1 is mounted at /backup and that your swap partition  (/dev/sdc2) is enabled
 lsblk | grep sdb1
 # ├─sdb1            8:17   0    2G  0 part /backup
 swapon -s
@@ -106,30 +106,28 @@ swapon -s
 # /dev/dm-1                               partition       839676  0       -2
 # /dev/sdb2                               partition       524284  0       -3
 
-2. LVM. Imagine you're running out of space on your root device. As we found out during the lesson default CentOS installation should already have LVM, means you can easily extend size of your root device. So what are you waiting for? Just do it!
-
-
-2.1. Create 2GB partition on /dev/sdc of type "Linux LVM"
+# 2. LVM. Imagine you're running out of space on your root device. As we found out during the lesson default CentOS installation should already have LVM, means you can easily extend size of your root device. So what are you waiting for? Just do it!
+# 2.1. Create 2GB partition on /dev/sdc of type "Linux LVM"
 fdisk /dev/sdb
-n
-3
+n # новый раздел
+3 # под номером 3
+# по умолчанию
++2G 
+t # изменить тип
+3 # раздела 3
+31 # тип 31. Linux LVM
 
-+2G
-t
-3
-31
-
-2.2. Initialize the partition as a physical volume (PV)
+# 2.2. Initialize the partition as a physical volume (PV)
 lvm> pvcreate /dev/sdb3
   # Physical volume "/dev/sdb3" successfully created.
 
 
-2.3. Extend the volume group (VG) of your root device using your newly created PV
+# 2.3. Extend the volume group (VG) of your root device using your newly created PV
 lvm> vgextend centos /dev/sdb3
   # Volume group "centos" successfully extended
 
 
-2.4. Extend your root logical volume (LV) by 1GB, leaving other 1GB unassigned
+# 2.4. Extend your root logical volume (LV) by 1GB, leaving other 1GB unassigned
 lvm> lvextend -L +1G /dev/centos/root /dev/sdb3
   # Size of logical volume centos/root changed from <6.20 GiB (1586 extents) to <7.20 GiB (1842 extents).
   # Logical volume centos/root successfully resized.
@@ -152,12 +150,12 @@ lvm> lvextend -L +1G /dev/centos/root /dev/sdb3
     # - currently set to     8192
     # Block device           253:0
 
-2.5. Check current disk space usage of your root device
+# 2.5. Check current disk space usage of your root device
 df -h | grep root
 # Filesystem               Size  Used Avail Use% Mounted on
 # /dev/mapper/centos-root  6.2G  1.3G  5.0G  20% /
 
-2.6. Extend your root device filesystem to be able to use additional free space of root LV
+# 2.6. Extend your root device filesystem to be able to use additional free space of root LV
 xfs_growfs / -d
 # meta-data=/dev/mapper/centos-root isize=512    agcount=4, agsize=406016 blks
 #          =                       sectsz=512   attr=2, projid32bit=1
@@ -170,7 +168,7 @@ xfs_growfs / -d
 # realtime =none                   extsz=4096   blocks=0, rtextents=0
 # data blocks changed from 1624064 to 1886208
 
-2.7. Verify that after reboot your root device is still 1GB bigger than at 2.5.
+# 2.7. Verify that after reboot your root device is still 1GB bigger than at 2.5.
 df -h
 # Filesystem               Size  Used Avail Use% Mounted on
 # devtmpfs                 484M     0  484M   0% /dev
