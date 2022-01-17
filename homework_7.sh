@@ -262,7 +262,13 @@ sudo yum --disablerepo="*" --enablerepo=epel install ncdu # выяснил та�
 ## Work with files
 ​
 # 1. Find all regular files below 100 bytes inside your home directory.
-find ~/ -type f -size -100b
+find ~/ -type f -size -100c
+# b – 512-byte blocks (this is the default if no suffix is used)
+# c – bytes
+# w – two-byte words
+# k – Kilobytes
+# M – Megabytes
+# G – Gigabytes
 
 2. Find an inode number and a hard links count for the root directory. The hard link count should be about 17. Why?
 ls -lai /
