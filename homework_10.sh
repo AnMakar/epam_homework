@@ -221,6 +221,50 @@ firewall-cmd --get-active-zones
   # newzone
   #   interfaces: enp0s8
   #   sources: 192.168.68.0/24
+  
+### Вариант с использованием Rich Rules
+firewall-cmd --permanent --zone=public --add-rich-rule 'rule family="ipv4" source address="192.168.68.0/24" service name="ssh" accept'
+# success
+firewall-cmd --permanent --zone=public --remove-service ssh
+# success
+firewall-cmd --permanent --zone=public --set-target=DROP
+# success
+firewall-cmd --reload
+# success
+firewall-cmd --list-all
+# public (active)
+#   target: DROP
+#   icmp-block-inversion: no
+#   interfaces: enp0s3
+#   sources:
+#   services: dhcpv6-client
+#   ports:
+#   protocols:
+#   masquerade: no
+#   forward-ports:
+#   source-ports:
+#   icmp-blocks:
+#   rich rules:
+#         rule family="ipv4" source address="192.168.68.0/24" service name="ssh" accept
+firewall-cmd --zone=public --remove-interface=enp0s3
+# success
+firewall-cmd --zone=public --change-interface=enp0s8
+# success
+firewall-cmd --list-all
+# public (active)
+#   target: DROP
+#   icmp-block-inversion: no
+#   interfaces: enp0s8
+#   sources:
+#   services: dhcpv6-client
+#   ports:
+#   protocols:
+#   masquerade: no
+#   forward-ports:
+#   source-ports:
+#   icmp-blocks:
+#   rich rules:
+#         rule family="ipv4" source address="192.168.68.0/24" service name="ssh" accept
 
 
 
@@ -240,6 +284,17 @@ iptables -A INPUT -i enp0s8 -j REJECT
 iptables -A INPUT -i enp0s3 -j REJECT
 
 iptables -nvL
+# Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+#  pkts bytes target     prot opt in     out     source               destination 
+#     0     0 ACCEPT     tcp  --  enp0s8 *       192.168.68.0/24      0.0.0.0/0            tcp dpt:22
+#     0     0 REJECT     all  --  enp0s8 *       0.0.0.0/0            0.0.0.0/0            reject-with icmp-port-unreachable
+#    42  5996 REJECT     all  --  enp0s3 *       0.0.0.0/0            0.0.0.0/0            reject-with icmp-port-unreachable
+# 
+# Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+#  pkts bytes target     prot opt in     out     source               destination 
+# 
+# Chain OUTPUT (policy ACCEPT 50 packets, 6160 bytes)
+#  pkts bytes target     prot opt in     out     source               destination 
 
 # в итоге я много промучился с данными командами, пробовал блокировать все входящие подключения и отдельно разрешать хотя бы только icmp пакеты, чисто для проверки, но правила не работают так как должны, хотя с теоретической части всё должно бы работать.
 # почему-то при блокировке enp0s3 я не мог пинговать и по ip на интерфейсе enp0s8
