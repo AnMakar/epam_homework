@@ -19,7 +19,8 @@ virtualenv .venv -p python3 # создаю виртуальное окружен
 # Task 1
 Self-study input() function. Write a script which accepts a sequence of comma-separated numbers from user and generate a list and a tuple with those numbers and prints these objects as-is (just print(list) without any formatting).
 
-Создаю скрипт task1.py
+Создаю скрипт [task1.py](https://github.com/AnMakar/epam_homework/blob/homework_python/python/task1.py)
+
 
 Теперь могу проверить работу скрипта
 ```
@@ -41,7 +42,7 @@ Develop a procedure to print all even numbers from a numbers list which is given
 cd ~/task2
 virtualenv .venv -p python3 # создаю виртуальное окружение
 ```
-Создаю скрипт task2.py
+Создаю скрипт [task2.py](https://github.com/AnMakar/epam_homework/blob/homework_python/python/task2.py)
 
 Теперь могу проверить работу скрипта
 ```
@@ -71,7 +72,7 @@ Something old in a new way :). Self-study positional arguments for Python script
 Исходя из того, что делает функция sys.argv, я понял задание следующим образом:
 Пользователем запускается скрипт командой с аргументами наподобие такой - ```python3 task3.py hello "my friend" 1```, после чего пользователю предлагается ввести одно из значений аргументов, чтобы выйти из скрипта. Странно, но допустим.
 
-Создаю скрипт task2.py
+Создаю скрипт [task3.py](https://github.com/AnMakar/epam_homework/blob/homework_python/python/task3.py)
 
 Теперь могу проверить работу скрипта
 ```
@@ -92,7 +93,7 @@ python3 task3.py hello "my friend" 1
 # Task 4
 We took a little look on os module. Write a small script which will print a string using all the types of string formatting which were considered during the lecture with the following context: This script has the following PID: <ACTUAL_PID_HERE>. It was ran by <ACTUAL_USERNAME_HERE> to work happily on <ACTUAL_OS_NAME>-<ACTUAL_OS_RELEASE>.
 
-Создаю скрипт task4.py.
+Создаю скрипт [task4.py](https://github.com/AnMakar/epam_homework/blob/homework_python/python/task4.py)
 
 Теперь могу проверить работу скрипта
 ```
@@ -115,7 +116,7 @@ This script has the following PID: 1360. It was ran by anme to work happily on p
 # Task 5
 Develop a function that takes a list of integers (by idea not in fact) as an argument and returns list of top-three max integers. If passed list contains not just integers collect them and print the following error message: You've passed some extra elements that I can't parse: [<"elem1", "elem2" .... >]. If return value will have less than 3 elements for some reason it's ok and shouldn't cause any problem, but some list should be returned in any case.
 
-Создаю скрипт task5.py.
+Создаю скрипт [task5.py](https://github.com/AnMakar/epam_homework/blob/homework_python/python/task5.py).
 
 Теперь могу проверить работу скрипта
 ```
@@ -140,7 +141,7 @@ Process finished with exit code 0
 # Task 6
 Create a function that will take a string as an argument and return a dictionary where keys are symbols from the string and values are the count of inclusion of that symbol.
 
-Создаю скрипт task6.py.
+Создаю скрипт [task6.py](https://github.com/AnMakar/epam_homework/blob/homework_python/python/task6.py)
 
 Теперь могу проверить работу скрипта
 ```
@@ -176,7 +177,7 @@ example:
 ```
 pip3 install numpy --user
 ```
-Создаю скрипт task7.py.
+Создаю скрипт [task7.py](https://github.com/AnMakar/epam_homework/blob/homework_python/python/task7.py)
 
 Теперь могу проверить работу скрипта
 ```
