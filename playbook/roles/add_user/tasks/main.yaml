@@ -1,0 +1,10 @@
+---
+- name: Add new user ansible
+  user:
+    name: ansible
+    group: wheel
+    
+- name: Update packages
+  yum:
+    name: '*'
+    state: latest  
