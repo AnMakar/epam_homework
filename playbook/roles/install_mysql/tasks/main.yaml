@@ -1,0 +1,70 @@
+---
+- name: create directory
+  file:
+    path: /opt/mysql
+    state: directory
+
+- name: download sources
+  get_url:
+    url: http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
+    dest: /opt/mysql/
+
+- name: Install MySQL package
+  yum:
+    name: /opt/mysql/mysql-community-release-el7-5.noarch.rpm
+    state: present
+
+- name: install mysql server
+  yum:
+    name: 
+    - mysql-server
+    - MySQL-python
+    state: latest
+
+- name: Start up the mysqld service
+  service:
+    name: mysqld
+    state: started
+    enabled: true
+
+- name: update mysql root password for all root accounts
+  mysql_user:
+    name: root
+    host: "{{ item }}"
+    password: "{{ mysql_root_password }}"
+#    login_user: root
+#    login_password: "{{ mysql_root_password }}"
+#    check_implicit_admin: yes
+#    priv: "*.*:ALL,GRANT"
+#  with_items:
+#  - "{{ ansible_hostname }}"
+#  - 127.0.0.1
+#  - ::1
+#  - localhost
+
+- name: create a new database
+  mysql_db:
+    name: testdb
+    state: present
+#    login_user: root
+#    login_password: "{{ mysql_root_password }}"
+
+- name: create database user with name "{{ mysql_user }}"
+  mysql_user:
+    name: "{{ mysql_user }}"
+    password: "{{ mysql_user_password }}"
+    priv: '*.*:ALL,GRANT'
+    state: present
+
+#- name: add sample data to database
+#  copy:
+#    src: dump.sql
+#    dest: /tmp/dump.sql
+
+#- name: insert sample data into database
+#  mysql_db:
+#    name: testdb
+#    state: import
+#    target: /tmp/dump.sql
+#    login_user: root
+#    login_password: "{{ mysql_root_password }}"

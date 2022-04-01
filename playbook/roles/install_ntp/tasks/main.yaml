@@ -1,0 +1,11 @@
+---
+- name: Install NTP server
+  yum:
+    name: ntp
+    state: latest
+- name: Copy config file for NTP
+  copy:
+    src: ntp.conf
+    dest: /etc/
+    mode: 600
+  notify: Restart NTP

@@ -1,0 +1,4 @@
+---
+mysql_root_password: password
+mysql_user: lala
+mysql_user_password: lala

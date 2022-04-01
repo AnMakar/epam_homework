@@ -1,0 +1,27 @@
+---
+- name: Install yum utils, device-mapper-persistent-data
+  yum:
+    name: 
+    - yum-utils
+    - device-mapper-persistent-data
+    - lvm2
+    state: latest
+
+- name: add docker repo
+  get_url:
+    url: https://download.docker.com/linux/centos/docker-ce.repo
+    dest: /etc/yum.repos.d/docker-ce.repo
+
+- name: install docker engine
+  yum:
+    name:
+    - docker-ce
+#    - docker-ce-cli
+#    - containerd.io
+    state: latest
+
+- name: start docker
+  service:
+    name: docker
+    state: started
+    enabled: yes
