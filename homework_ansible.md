@@ -178,7 +178,11 @@ ansible all -k -u root -m user -a "name=ansible groups=wheel append=yes"
 ```
 
 # 4. написать плейбук, со ролями, которые позволят:
+Плейбуки находятся здесь - https://github.com/AnMakar/epam_homework/tree/homework_ansible/playbook
+
 ###  - создать пользователя из п.2; обновить все пакеты в системе
+
+Плейбук - https://github.com/AnMakar/epam_homework/blob/homework_ansible/playbook/playbook_user.yaml
 
 ```
 sudo ansible-playbook playbook_user.yaml -k --check
@@ -204,6 +208,9 @@ ansible_2                  : ok=3    changed=1    unreachable=0    failed=0    s
 ```
 
 ###  - установить ntp-сервер и заменить его стандартный конфиг на кастомный (примеры можно поискать в сети)
+
+Плейбук - https://github.com/AnMakar/epam_homework/blob/homework_ansible/playbook/playbook_ntp.yaml
+
 ```
 sudo ansible-playbook playbook_ntp.yaml -k
 
@@ -227,6 +234,8 @@ ansible_2                  : ok=3    changed=0    unreachable=0    failed=0    s
 ```
 
 ###  - установить mysql-сервер, создать пользователя БД и саму базу данных
+
+Плейбук - https://github.com/AnMakar/epam_homework/blob/homework_ansible/playbook/playbook_mysql.yaml
 
 Написание плейбука для MySQL далось очень тяжело, перелопатил много разных вариантов плейбуков в интернете, чтобы разобраться как оно хоть примерно должно бы отрабатывать. Ранее я не углублялся в работу MySQL и не очень понимаю как оно без и плейбука-то должно работать. Поэтому большая часть плейбука выполняется и я уже рад. Финальную ошибку устранить пока не удалось.
 
@@ -272,6 +281,8 @@ ansible_2                  : ok=6    changed=0    unreachable=0    failed=1    s
 
 ###  - * установить nginx и настроить его так, чтобы он обслуживал сайт example.com; содержимое сайта должно лежать в /var/www-data/example.com и представлять из себя любой валидный html-документ
 ##  - * установить docker в соответствии с инструкцией https://docs.docker.com/engine/install/centos/
+
+Плейбук - https://github.com/AnMakar/epam_homework/blob/homework_ansible/playbook/playbook_docker.yaml
 
 ```
 sudo ansible-playbook playbook_docker.yaml -k
